@@ -110,95 +110,99 @@ async def extract_info(
         )
 
     try:
-        # Gọi Gemini OCR với TẤT CẢ các ảnh trong 1 request
-        student_info = await extract_student_info(loaded_images)
+        # # Gọi Gemini OCR với TẤT CẢ các ảnh trong 1 request
+        # student_info = await extract_student_info(loaded_images)
+        # school_name = student_info.school_name
+        # major = student_info.major
+        # gpa = student_info.gpa
+        # if major is None:
+        #     major = ""
+        # if gpa is None:
+        #     gpa = ""
 
-        school_name = student_info.school_name
-        major = student_info.major
-        gpa = student_info.gpa
-        if major is None:
-            major = ""
-        if gpa is None:
-            gpa = ""
-
-        # school_name = "Đại học Công Nghiệp Hà Nội"
-        # major = "Du lịch (Tiếng Anh)"
+        school_name = "Đại học Công Nghiệp Hà Nội"
+        major = "Du lịch (Tiếng Anh)"
         # major = ""
-        # gpa = "3.5"
-        # student_info = StudentInfo(school_name=school_name, major=major or None, gpa=gpa or None)
+        gpa = "3.5"
+        student_info = StudentInfo(school_name=school_name, major=major or None, gpa=gpa or None)
 
 
         if school_name and major:
             university_data = fetch_university_and_major_data(school_name, major, gpa)
 
-            # university_data = {
-            #     "university": {
-            #         "name": "Đại học Công Nghiệp Hà Nội",
-            #         "location": "Hà Nội",
-            #         "description": "Đại học Công Nghiệp Hà Nội là một trường đại học công lập lớn, đa ngành, có truyền thống lâu đời tại Việt Nam, chuyên đào tạo nguồn nhân lực chất lượng cao trong các lĩnh vực công nghiệp, kỹ thuật, kinh tế và dịch vụ.",
-            #         "rating": "Tốt",
-            #         "schoolScore100": 78,
-            #     },
-            #     "major": {
-            #         "name": "Du lịch (Tiếng Anh)",
-            #         "description": "Chương trình Du lịch (Tiếng Anh) tại Đại học Công Nghiệp Hà Nội đào tạo sinh viên có kiến thức chuyên sâu về ngành du lịch, quản lý lữ hành, khách sạn và dịch vụ, đồng thời trang bị khả năng sử dụng tiếng Anh thành thạo trong môi trường làm việc quốc tế.",
-            #         "admissionScores": [
-            #         {
-            #             "year": "2023",
-            #             "score": 23.5
-            #         },
-            #         {
-            #             "year": "2022",
-            #             "score": 23.5
-            #         },
-            #         {
-            #             "year": "2021",
-            #             "score": 23.65
-            #         }
-            #         ],
-            #         "tuition": "Học phí trung bình khoảng 20.000.000 VNĐ/năm học, có thể điều chỉnh theo quy định của nhà nước và trường qua từng năm.",
-            #         "tuitionAvg": 20000000,
-            #         "majorScore100": 60,
-            #         "rating": "Khá"
-            #     }
-            #     }
+            university_data = {
+                "university": {
+                    "name": "Đại học Công Nghiệp Hà Nội",
+                    "location": "Hà Nội",
+                    "description": "Đại học Công Nghiệp Hà Nội là một trường đại học công lập lớn, đa ngành, có truyền thống lâu đời tại Việt Nam, chuyên đào tạo nguồn nhân lực chất lượng cao trong các lĩnh vực công nghiệp, kỹ thuật, kinh tế và dịch vụ.",
+                    "rating": "Tốt",
+                    "schoolScore100": 78,
+                },
+                "major": {
+                    "name": "Du lịch (Tiếng Anh)",
+                    "description": "Chương trình Du lịch (Tiếng Anh) tại Đại học Công Nghiệp Hà Nội đào tạo sinh viên có kiến thức chuyên sâu về ngành du lịch, quản lý lữ hành, khách sạn và dịch vụ, đồng thời trang bị khả năng sử dụng tiếng Anh thành thạo trong môi trường làm việc quốc tế.",
+                    "admissionScores": [
+                    {
+                        "year": "2023",
+                        "score": 23.5
+                    },
+                    {
+                        "year": "2022",
+                        "score": 23.5
+                    },
+                    {
+                        "year": "2021",
+                        "score": 23.65
+                    }
+                    ],
+                    "tuition": "Học phí trung bình khoảng 20.000.000 VNĐ/năm học, có thể điều chỉnh theo quy định của nhà nước và trường qua từng năm.",
+                    "tuitionAvg": 20000000,
+                    "majorScore100": 60,
+                    "rating": "Khá"
+                }
+                }
             
         elif school_name:
-            # print(">> GO IN HERE")
-            # raw = {
-            #     "name": "Trường Cao đẳng Kỹ nghệ II",
-            #     "location": "Thành phố Hồ Chí Minh",
-            #     "schoolScore100": 51.7,
-            #     "rating": "Trung bình",
-            #     "highlightMajors": [
-            #         {"majorName": "Công nghệ ô tô", "score": "15.0/30"},
-            #         {"majorName": "Công nghệ thông tin", "score": "15.0/30"},
-            #         {"majorName": "Kỹ thuật điện", "score": "15.0/30"},
-            #         {"majorName": "Kế toán", "score": "15.0/30"},
-            #         {"majorName": "Quản trị kinh doanh", "score": "15.0/30"}
-            #     ],
-            #     "tuition": "Khoảng 12.000.000 - 16.000.000 VNĐ/năm học",
-            #     "tuitionAvg": 14000000,
-            #     "admissionYear": "2023",
-            #     "description": "Trường Cao đẳng Kỹ nghệ II là cơ sở đào tạo nghề uy tín tại Thành phố Hồ Chí Minh.",
-            #     "scoreScale": 30
-            # }
+            print(">> GO IN HERE")
+            raw = {
+                "name": "Trường Cao đẳng Kỹ nghệ II",
+                "location": "Thành phố Hồ Chí Minh",
+                "schoolScore100": 51.7,
+                "rating": "Trung bình",
+                "highlightMajors": [
+                    {"majorName": "Công nghệ ô tô", "score": "15.0/30"},
+                    {"majorName": "Công nghệ thông tin", "score": "15.0/30"},
+                    {"majorName": "Kỹ thuật điện", "score": "15.0/30"},
+                    {"majorName": "Kế toán", "score": "15.0/30"},
+                    {"majorName": "Quản trị kinh doanh", "score": "15.0/30"}
+                ],
+                "tuition": "Khoảng 12.000.000 - 16.000.000 VNĐ/năm học",
+                "tuitionAvg": 14000000,
+                "admissionYear": "2023",
+                "description": "Trường Cao đẳng Kỹ nghệ II là cơ sở đào tạo nghề uy tín tại Thành phố Hồ Chí Minh.",
+                "scoreScale": 30
+            }
 
-            raw = fetch_university_data(school_name, gpa)
+            # raw = fetch_university_data(school_name, gpa)
 
             # Normalize flat → nested để frontend dùng chung 1 UI
             university_data = {
                 "university": {
-                    "name": raw.get("name"),
-                    "location": raw.get("location"),
-                    "description": raw.get("description"),
-                    "admissionYear": raw.get("admissionYear"),
-                    "schoolScore100": raw.get("schoolScore100"),
-                    "rating": raw.get("rating"),
-                    "tuition": raw.get("tuition"),
-                    "tuitionAvg": raw.get("tuitionAvg"),
+                    "name": "Đại học Công Nghiệp Hà Nội",
+                    "location": "Hà Nội",
+                    "description": "Đại học Công Nghiệp Hà Nội là một trường đại học công lập lớn, đa ngành, có truyền thống lâu đời tại Việt Nam, chuyên đào tạo nguồn nhân lực chất lượng cao trong các lĩnh vực công nghiệp, kỹ thuật, kinh tế và dịch vụ.",
+                    "rating": "Tốt",
+                    "schoolScore100": 78,
+                    # "tuition": "Học phí trung bình khoảng 20.000.000 VNĐ/năm học, có thể điều chỉnh theo quy định của nhà nước và trường qua từng năm.",
+                    "tuitionAvg": 20000000,
                 },
-                "highlightMajors": raw.get("highlightMajors", []),
+                "highlightMajors": [
+                    {"majorName": "Công nghệ ô tô", "score": "15.0/30"},
+                    {"majorName": "Công nghệ thông tin", "score": "15.0/30"},
+                    {"majorName": "Kỹ thuật điện", "score": "15.0/30"},
+                    {"majorName": "Kế toán", "score": "15.0/30"},
+                    {"majorName": "Quản trị kinh doanh", "score": "15.0/30"}
+                ],
             }
         else:
             logger.info(">> NO SCHOOL AND NO MAJOR")

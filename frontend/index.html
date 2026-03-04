@@ -89,20 +89,42 @@
         opacity: .3;
       }
     }
+
+    /* Collapsible input card */
+    .input-body {
+      max-height: 600px;
+      overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.3s ease, margin-top 0.3s ease;
+      opacity: 1;
+    }
+
+    .input-body.collapsed {
+      max-height: 0;
+      opacity: 0;
+      margin-top: 0 !important;
+    }
+
+    .toggle-icon {
+      transition: transform 0.3s ease;
+    }
+
+    .toggle-icon.collapsed {
+      transform: rotate(180deg);
+    }
   </style>
 </head>
 
-<body class="bg-slate-100 min-h-screen">
+<body class="bg-white text-black min-h-screen">
 
   <!-- ═══ HEADER ═══ -->
-  <header class="bg-white border-b border-gray-100 shadow-sm px-6 py-4 flex items-center gap-3">
-    <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">SV
+  <header class="bg-white border-b border-black shadow-sm px-6 py-4 flex items-center gap-3">
+    <div class="w-8 h-8 rounded-lg bg-black flex items-center justify-center text-white font-bold text-sm">SV
     </div>
     <div>
-      <h1 class="font-bold text-gray-800 text-base leading-tight">Phân tích thông tin sinh viên</h1>
-      <p class="text-[11px] text-gray-400">OCR ảnh → Gemini → Phân tích trường/ngành</p>
+      <h1 class="font-bold text-black text-base leading-tight">Phân tích thông tin sinh viên</h1>
+      <p class="text-[11px] text-gray-800">OCR ảnh → Gemini → Phân tích trường/ngành</p>
     </div>
-    <div id="api-status" class="ml-auto flex items-center gap-2 text-xs text-gray-400">
+    <div id="api-status" class="ml-auto flex items-center gap-2 text-xs text-gray-800">
       <span class="pulse-dot"></span>
       <span>API: 0.0.0.0:8188</span>
     </div>
@@ -111,48 +133,60 @@
   <main class="max-w-6xl mx-auto p-6 space-y-6">
 
     <!-- ═══ INPUT FORM ═══ -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 card-in">
-      <p class="text-sm font-bold text-gray-700 mb-4">📤 Nhập ảnh để phân tích</p>
-
-      <!-- Tab: URL / Upload -->
-      <div class="flex gap-1 p-1 bg-gray-100 rounded-lg mb-5 w-fit">
-        <button id="tab-url" onclick="switchTab('url')"
-          class="tab-btn active px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-white shadow text-indigo-700">🔗
-          URL ảnh</button>
-        <button id="tab-upload" onclick="switchTab('upload')"
-          class="tab-btn px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-700">📁
-          Upload file</button>
-      </div>
-
-      <!-- Panel: URL -->
-      <div id="panel-url" class="space-y-3">
-        <div id="url-list" class="space-y-2"></div>
-        <button onclick="addUrlInput()"
-          class="flex items-center gap-1.5 text-xs text-indigo-500 hover:text-indigo-700 font-medium transition-colors">
-          <span class="text-base leading-none">＋</span> Thêm URL
+    <div id="input-card" class="bg-white rounded-2xl border border-black shadow-sm p-6 card-in">
+      <div class="flex items-center justify-between cursor-pointer" onclick="toggleInputCard()">
+        <p class="text-sm font-bold text-black">📤 Nhập ảnh để phân tích</p>
+        <button id="toggle-btn"
+          class="hidden items-center gap-1.5 text-xs text-black hover:text-black font-medium transition-colors">
+          <span>Nhập lại</span>
+          <svg class="toggle-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
         </button>
       </div>
 
-      <!-- Panel: Upload -->
-      <div id="panel-upload" class="hidden">
-        <div id="drop-zone"
-          class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-all"
-          ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)"
-          onclick="document.getElementById('file-input').click()">
-          <div class="text-4xl mb-2">🖼️</div>
-          <p class="text-sm font-medium text-gray-600">Kéo thả ảnh vào đây, hoặc click để chọn</p>
-          <p class="text-xs text-gray-400 mt-1">JPG, PNG, WEBP — tối đa 10MB</p>
-          <input id="file-input" type="file" accept="image/*" multiple class="hidden" onchange="onFileSelect(event)" />
+      <div id="input-body" class="input-body mt-4">
+        <!-- Tab: URL / Upload -->
+        <div class="flex gap-1 p-1 bg-white rounded-lg mb-5 w-fit">
+          <button id="tab-url" onclick="switchTab('url')"
+            class="tab-btn active px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-white shadow text-black">🔗
+            URL ảnh</button>
+          <button id="tab-upload" onclick="switchTab('upload')"
+            class="tab-btn px-4 py-1.5 rounded-md text-sm font-medium transition-all text-black hover:text-black">📁
+            Upload file</button>
         </div>
-        <div id="file-preview" class="flex flex-wrap gap-3 mt-4"></div>
-      </div>
 
-      <!-- Submit -->
-      <button id="submit-btn" onclick="submitRequest()"
-        class="mt-5 w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-semibold rounded-xl py-3 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
-        <span id="btn-icon">🔍</span>
-        <span id="btn-text">Phân tích</span>
-      </button>
+        <!-- Panel: URL -->
+        <div id="panel-url" class="space-y-3">
+          <div id="url-list" class="space-y-2"></div>
+          <button onclick="addUrlInput()"
+            class="flex items-center gap-1.5 text-xs text-black hover:text-black font-medium transition-colors">
+            <span class="text-base leading-none">＋</span> Thêm URL
+          </button>
+        </div>
+
+        <!-- Panel: Upload -->
+        <div id="panel-upload" class="hidden">
+          <div id="drop-zone"
+            class="border-2 border-dashed border-black rounded-xl p-8 text-center cursor-pointer hover:border-black hover:bg-white transition-all"
+            ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)"
+            onclick="document.getElementById('file-input').click()">
+            <div class="text-4xl mb-2">🖼️</div>
+            <p class="text-sm font-medium text-black">Kéo thả ảnh vào đây, hoặc click để chọn</p>
+            <p class="text-xs text-gray-800 mt-1">JPG, PNG, WEBP — tối đa 10MB</p>
+            <input id="file-input" type="file" accept="image/*" multiple class="hidden"
+              onchange="onFileSelect(event)" />
+          </div>
+          <div id="file-preview" class="flex flex-wrap gap-3 mt-4"></div>
+        </div>
+
+        <!-- Submit -->
+        <button id="submit-btn" onclick="submitRequest()"
+          class="mt-5 w-full flex items-center justify-center gap-2 bg-black hover:bg-gray-800 active:scale-95 text-white font-semibold rounded-xl py-3 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+          <span id="btn-icon">🔍</span>
+          <span id="btn-text">Phân tích</span>
+        </button>
+      </div>
     </div>
 
     <!-- ═══ RESULT AREA ═══ -->
@@ -166,6 +200,33 @@
     let currentTab = 'url';
     let selectedFiles = [];
     let urlInputCount = 0;
+    let submittedImageUrls = [];
+    let currentPreviewIndex = 0;
+
+    // ─── Image Slider ─────────────────────────────────────────
+    window.nextPreview = function () {
+      if (!submittedImageUrls.length) return;
+      currentPreviewIndex = (currentPreviewIndex + 1) % submittedImageUrls.length;
+      updatePreviewSlider();
+    };
+
+    window.prevPreview = function () {
+      if (!submittedImageUrls.length) return;
+      currentPreviewIndex = (currentPreviewIndex - 1 + submittedImageUrls.length) % submittedImageUrls.length;
+      updatePreviewSlider();
+    };
+
+    function updatePreviewSlider() {
+      const imgEl = document.getElementById('preview-slider-img');
+      const counterEl = document.getElementById('preview-slider-counter');
+      const linkEl = document.getElementById('preview-slider-link');
+      if (imgEl && submittedImageUrls[currentPreviewIndex]) {
+        const url = submittedImageUrls[currentPreviewIndex];
+        imgEl.src = url;
+        if (linkEl) linkEl.href = url;
+        if (counterEl) counterEl.textContent = `${currentPreviewIndex + 1} / ${submittedImageUrls.length}`;
+      }
+    }
 
     // ─── Tab switching ────────────────────────────────────────
     function switchTab(tab) {
@@ -176,8 +237,8 @@
         const isActive = btn.id === `tab-${tab}`;
         btn.classList.toggle('bg-white', isActive);
         btn.classList.toggle('shadow', isActive);
-        btn.classList.toggle('text-indigo-700', isActive);
-        btn.classList.toggle('text-gray-500', !isActive);
+        btn.classList.toggle('text-black', isActive);
+        btn.classList.toggle('text-black', !isActive);
       });
     }
 
@@ -190,7 +251,7 @@
       div.id = `url-row-${urlInputCount}`;
       div.innerHTML = `
         <input id="${id}" type="url" value="${value}" placeholder="https://example.com/bangdiem.jpg"
-          class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all placeholder-gray-300" />
+          class="flex-1 px-4 py-2.5 rounded-xl border border-black text-sm bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all placeholder-gray-300" />
         <button onclick="document.getElementById('url-row-${urlInputCount}').remove()" class="text-gray-300 hover:text-red-400 transition-colors text-lg leading-none">×</button>`;
       document.getElementById('url-list').appendChild(div);
     }
@@ -221,10 +282,10 @@
         const div = document.createElement('div');
         div.className = 'relative group';
         div.innerHTML = `
-          <img src="${url}" class="img-thumb border border-gray-200 shadow-sm" />
+          <img src="${url}" class="img-thumb border border-black shadow-sm" />
           <button onclick="removeFile(${i})"
             class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
-          <p class="text-[9px] text-gray-400 mt-1 max-w-[72px] truncate">${file.name}</p>`;
+          <p class="text-[9px] text-gray-800 mt-1 max-w-[72px] truncate">${file.name}</p>`;
         container.appendChild(div);
       });
     }
@@ -243,13 +304,19 @@
           const urls = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
           if (!urls.length) { alert('Vui lòng nhập ít nhất 1 URL ảnh.'); setLoading(false); return; }
 
-          // Form data (List[str] = Form(None))
+          submittedImageUrls = [...urls];
+          currentPreviewIndex = 0;
+
           const fd = new FormData();
           urls.forEach(u => fd.append('images', u));
           response = await fetch(API_URL, { method: 'POST', body: fd });
 
         } else {
           if (!selectedFiles.length) { alert('Vui lòng chọn ít nhất 1 file ảnh.'); setLoading(false); return; }
+
+          submittedImageUrls = selectedFiles.map(f => URL.createObjectURL(f));
+          currentPreviewIndex = 0;
+
           const fd = new FormData();
           selectedFiles.forEach(f => fd.append('files', f));
           response = await fetch(API_URL, { method: 'POST', body: fd });
@@ -262,11 +329,35 @@
 
         const data = await response.json();
         renderResult(data);
+        collapseInputCard();
 
       } catch (err) {
         renderError(err.message);
       } finally {
         setLoading(false);
+      }
+    }
+
+    // ─── Collapse / Expand input card ─────────────────────────
+    let inputCollapsed = false;
+
+    function collapseInputCard() {
+      inputCollapsed = true;
+      document.getElementById('input-body').classList.add('collapsed');
+      document.getElementById('toggle-btn').classList.remove('hidden');
+      document.getElementById('toggle-btn').classList.add('flex');
+      document.querySelector('.toggle-icon').classList.add('collapsed');
+    }
+
+    function expandInputCard() {
+      inputCollapsed = false;
+      document.getElementById('input-body').classList.remove('collapsed');
+      document.querySelector('.toggle-icon').classList.remove('collapsed');
+    }
+
+    function toggleInputCard() {
+      if (!document.getElementById('toggle-btn').classList.contains('hidden')) {
+        inputCollapsed ? expandInputCard() : collapseInputCard();
       }
     }
 
@@ -342,6 +433,50 @@
 
       let html = ``;
 
+      // ══ ROW 1: OCR Card (full width) ══
+      html += `
+      <div class="card-in bg-white rounded-2xl shadow-lg border border-black p-5 mb-5">
+        <p class="text-lg font-black uppercase tracking-widest text-black mb-3">📄 Thông tin chính</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-base">
+          <div class="bg-white rounded-lg p-3 border border-black">
+            <p class="text-sm text-gray-800 uppercase mb-1">Tên trường</p>
+            <p class="font-bold text-black">${ocr.school_name || '<span class="text-gray-800 italic">Không tìm thấy</span>'}</p>
+          </div>
+          <div class="bg-white rounded-lg p-3 border border-black">
+            <p class="text-sm text-gray-800 uppercase mb-1">Ngành</p>
+            <p class="font-bold text-black">${ocr.major || '<span class="text-gray-800 italic">Không tìm thấy</span>'}</p>
+          </div>
+          <div class="bg-white rounded-lg p-3 border border-black">
+            <p class="text-sm text-gray-800 uppercase mb-1">GPA</p>
+            <p class="font-bold ${ocr.gpa ? 'text-black' : 'text-gray-800 italic'}">${ocr.gpa ?? 'Không tìm thấy'}</p>
+          </div>
+        </div>
+      </div>`;
+
+      // ══ ROW 2: Grid [Trường + Ngành | Preview ảnh] ══
+      const previewCard = submittedImageUrls.length ? `
+        <div class="bg-white rounded-2xl shadow-lg border border-black p-4 md:sticky md:top-6 md:col-span-2 flex flex-col items-center">
+          <div class="flex items-center justify-between w-full mb-3">
+            <p class="text-sm font-bold uppercase tracking-widest text-gray-800">🖼️ Ảnh gốc</p>
+            ${submittedImageUrls.length > 1 ? `<span id="preview-slider-counter" class="text-xs font-medium text-black bg-white px-2 py-0.5 rounded-md">1 / ${submittedImageUrls.length}</span>` : ''}
+          </div>
+          
+          <div class="relative w-full flex-1 flex items-center justify-center overflow-hidden min-h-[300px]">
+             <a id="preview-slider-link" href="${submittedImageUrls[0]}" target="_blank" class="block w-full h-full flex items-center justify-center">
+               <img id="preview-slider-img" src="${submittedImageUrls[0]}" class="w-full h-auto object-contain rounded drop-shadow-sm transition-opacity duration-200" onerror="this.parentElement.style.display='none'" />
+             </a>
+             
+             ${submittedImageUrls.length > 1 ? `
+             <button onclick="prevPreview()" class="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-white/90 hover:bg-white text-black rounded-full shadow-md border border-black transition-all hover:scale-105 active:scale-95">
+               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+             </button>
+             <button onclick="nextPreview()" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-white/90 hover:bg-white text-black rounded-full shadow-md border border-black transition-all hover:scale-105 active:scale-95">
+               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+             </button>
+             ` : ''}
+          </div>
+        </div>` : '';
+
       if (ud && (ud.university || ud.major)) {
         const u = ud.university || {};
         const m = ud.major || {};
@@ -351,189 +486,128 @@
         const mScoreColor = SCORE_COLOR[m?.rating] || '#6366f1';
 
         html += `
-        <div class="card-in grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="card-in grid grid-cols-1 ${previewCard ? 'md:grid-cols-5' : ''} gap-5">
 
-          <!-- ═══ CỘT TRÁI: Header + Gauge + Học phí + OCR ═══ -->
-          <div class="space-y-5">
-            <!-- Header -->
-            <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-              <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white">
-                <div class="flex justify-between items-start">
-                  <div>
-                    ${hasUniversity
-            ? `<h2 class="text-2xl font-bold mb-1">${u.name}</h2>
-                         <div class="flex items-center gap-2 text-blue-100 text-sm">📍 <span>${u.location || 'N/A'}</span></div>`
-            : `<h2 class="text-2xl font-bold mb-1">Kết quả phân tích</h2>`}
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <span class="pulse-dot" style="background:${data.success ? '#22c55e' : '#ef4444'}"></span>
-                    ${hasUniversity ? `<span class="px-3 py-1.5 rounded-lg text-sm font-bold border shadow-sm bg-white/90 ${RATING_STYLE[u.rating] || ''}">${RATING_BADGE[u.rating] || u.rating}</span>` : ''}
-                  </div>
+          <div class="${previewCard ? 'md:col-span-3' : ''} space-y-5">
+
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-black">
+              <!-- Header gradient -->
+
+              <div class="p-5 space-y-5">
+
+                <!-- 1. Điểm đánh giá -->
+                <div class="grid grid-cols-1 ${hasMajor ? 'md:grid-cols-2' : ''} gap-4">
+                  ${hasUniversity ? `
+                  <div class="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-black">
+                    <p class="text-lg font-bold uppercase tracking-wider text-black mb-2">🏫 Điểm trường</p>
+                    ${renderGauge(u.schoolScore100, u.rating)}
+                    <div class="mt-2 text-center">
+                      <p class="text-sm font-bold px-3 py-1 rounded-full inline-block ${RATING_STYLE[u.rating] || 'bg-white text-black'}">${RATING_BADGE[u.rating] || u.rating}</p>
+                    </div>
+                  </div>` : ''}
+                  ${hasMajor ? `
+                  <div class="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-black">
+                    <p class="text-lg font-bold uppercase tracking-wider text-black mb-2">🎓 Điểm ngành</p>
+                    ${renderGauge(m.majorScore100, m.rating)}
+                    <div class="mt-2 text-center">
+                      <p class="text-sm font-bold px-3 py-1 rounded-full inline-block ${RATING_STYLE[m.rating] || 'bg-white text-black'}">${RATING_BADGE[m.rating] || m.rating}</p>
+                    </div>
+                  </div>` : ''}
                 </div>
+
+                <!-- 2. Học phí -->
+                ${(hasMajor && m.tuitionAvg) || (hasUniversity && u.tuitionAvg) ? `
+                <div class="bg-green-50 rounded-lg p-4 border border-green-100">
+                  <p class="text-base font-bold text-green-700 tracking-wider mb-1">💵 Học phí ước tính</p>
+                  <p class="text-sm font-semibold text-green-900">${hasMajor
+              ? (m.tuition || (m.tuitionAvg ? (m.tuitionAvg / 1_000_000).toFixed(0) + ' triệu / năm' : 'N/A'))
+              : (u.tuition || (u.tuitionAvg ? (u.tuitionAvg / 1_000_000).toFixed(0) + ' triệu / năm' : 'N/A'))
+            }</p>
+                </div>` : ''}
+
+                <!-- 3. Phân tích trường -->
+                ${hasUniversity && u.description ? `
+                <br>
+                <div>
+                  <h3 class="text-base font-bold text-black flex items-center gap-2 mb-2">🏫 Phân tích trường: ${u.name}</h3>
+                  <p class="text-black text-base leading-relaxed">${u.description}</p>
+                </div>` : ''}
+
+                <br>
+                <!-- 4. Phân tích ngành -->
+                ${hasMajor ? `
+                <div>
+                  <h3 class="text-base font-bold text-black flex items-center gap-2 mb-2">🎓 Phân tích ngành — ${m.name}</h3>
+                  ${m.description ? `<p class="text-black text-base leading-relaxed mb-4">${m.description}</p>` : ''}
+
+                  <br>
+                  <div class="bg-white rounded-lg overflow-hidden border border-black">
+                    <table class="w-full text-base text-left">
+                      <thead class="text-sm font-bold text-black uppercase bg-white">
+                        <tr>
+                          <th class="px-3 py-2">Điểm chuẩn các năm</th>
+                          <th class="px-3 py-1.5 text-right">Giá trị</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${(m.admissionScores && m.admissionScores.length > 0) ? m.admissionScores.map(scoreObj => `
+                        <tr class="border-b border-black hover:bg-white transition-colors">
+                          <td class="px-3 py-1.5 font-medium text-black">Điểm chuẩn (${scoreObj.year})</td>
+                          <td class="px-3 py-1.5 text-right font-bold text-black">${scoreObj.score}</td>
+                        </tr>`).join('') : `
+                        <tr class="border-b border-black hover:bg-white transition-colors">
+                          <td class="px-3 py-1.5 font-medium text-black">Năm dữ liệu</td>
+                          <td class="px-3 py-1.5 text-right font-bold text-black">${m.admissionYear ?? 'Mới nhất'}</td>
+                        </tr>`}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>` : `
+                <!-- Không có ngành → highlightMajors -->
+                ${(ud.highlightMajors && ud.highlightMajors.length) ? `
+                <div>
+                  <h3 class="text-base font-bold text-black xácflex items-center gap-2 mb-2">📋 Điểm chuẩn tiêu biểu</h3>
+                  <div class="bg-white rounded-lg overflow-hidden border border-black">
+                    <table class="w-full text-base text-left">
+                      <thead class="text-sm font-bold text-black uppercase bg-white">
+                        <tr>
+                          <th class="px-3 py-2">Ngành</th>
+                          <th class="px-3 py-2 text-right">Điểm chuẩn</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${ud.highlightMajors.map((hm, i) => `
+                        <tr class="${i < ud.highlightMajors.length - 1 ? 'border-b border-black' : ''} hover:bg-white transition-colors">
+                          <td class="px-3 py-2 font-medium text-black">${hm.majorName}</td>
+                          <td class="px-3 py-2 text-right font-bold text-black">${hm.score}</td>
+                        </tr>`).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>` : ''}
+                `}
+
               </div>
             </div>
-            <!-- Gauge điểm quy đổi (cột trái) -->
-            ${hasUniversity ? `
-            <div class="flex flex-col items-center justify-center p-4 bg-white rounded-2xl shadow-lg border border-gray-100">
-              ${renderGauge(u.schoolScore100, u.rating)}
-              <div class="mt-2 text-center">
-                <p class="text-sm font-bold px-3 py-1 rounded-full inline-block mb-1 ${RATING_STYLE[u.rating] || 'bg-gray-100 text-gray-600'}">${RATING_BADGE[u.rating] || u.rating}</p>
-                <p class="text-xs text-gray-500">Điểm trường dựa trên điểm đầu vào quy đổi thang 100</p>
-              </div>
-            </div>` : ''}
-            <!-- OCR Raw -->
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
-              <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">📄 Thông tin OCR từ ảnh</p>
-              <div class="space-y-3 text-sm">
-                <div class="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                  <p class="text-xs text-slate-400 uppercase mb-1">Tên trường</p>
-                  <p class="font-bold text-slate-700">${ocr.school_name || '<span class="text-slate-400 italic">Không tìm thấy</span>'}</p>
-                </div>
-                <div class="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                  <p class="text-xs text-slate-400 uppercase mb-1">Ngành</p>
-                  <p class="font-bold text-slate-700">${ocr.major || '<span class="text-slate-400 italic">Không tìm thấy</span>'}</p>
-                </div>
-                <div class="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                  <p class="text-xs text-slate-400 uppercase mb-1">GPA</p>
-                  <p class="font-bold ${ocr.gpa ? 'text-slate-700' : 'text-slate-400 italic'}">${ocr.gpa ?? 'Không tìm thấy'}</p>
-                </div>
-              </div>
-              ${src ? `<p class="text-[10px] text-gray-400 mt-3">Nguồn: <a href="${src}" target="_blank" class="text-blue-400 hover:underline">${src.substring(0, 60)}…</a></p>` : ''}
-            </div>
+
           </div>
 
-          <!-- ═══ CỘT PHẢI: Trường + Ngành ═══ -->
-          <div class="space-y-5">
-            <!-- Trường (chỉ hiển thị mô tả, gauge đã ở cột trái) -->
-            ${hasUniversity && u.description ? `
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">🏫 Thông tin trường</h3>
-                <span class="px-3 py-1 rounded-lg text-xs font-bold border shadow-sm ${RATING_STYLE[u.rating] || ''}">${RATING_BADGE[u.rating] || u.rating}</span>
-              </div>
-              <p class="text-gray-600 text-sm leading-relaxed">${u.description}</p>
-            </div>` : ''}
-
-            <!-- Ngành (nếu có) -->
-            ${hasMajor ? `
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">🎓 ${m.name}</h3>
-                <span class="px-3 py-1 rounded-lg text-xs font-bold border shadow-sm ${RATING_STYLE[m.rating] || ''}">${RATING_BADGE[m.rating] || m.rating}</span>
-              </div>
-              <!-- Gauge -->
-              <div class="col-span-1 flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl border border-gray-100 mb-4">
-                ${renderGauge(m.majorScore100, m.rating)}
-                <div class="mt-2 text-center">
-                  <p class="text-sm font-bold px-3 py-1 rounded-full inline-block mb-1 ${RATING_STYLE[m.rating] || 'bg-gray-100 text-gray-600'}">${RATING_BADGE[m.rating] || m.rating}</p>
-                  <p class="text-xs text-gray-500">Điểm ngành dựa trên điểm đầu vào quy đổi thang 100</p>
-                </div>
-              </div>
-              <!-- Học phí -->
-              <div class="bg-green-50 rounded-lg p-3 border border-green-100 mb-4">
-                <p class="text-[10px] font-bold uppercase text-green-700 tracking-wider mb-0.5">💵 Học phí ước tính</p>
-                <p class="text-sm font-semibold text-green-900">${m.tuition || (m.tuitionAvg ? (m.tuitionAvg / 1_000_000).toFixed(0) + ' triệu / năm' : 'N/A')}</p>
-              </div>
-              ${m.description ? `<p class="text-gray-600 text-sm leading-relaxed mb-3">${m.description}</p>` : ''}
-              <!-- Bảng thông số -->
-              <div class="bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
-                <table class="w-full text-sm text-left">
-                  <thead class="text-xs text-gray-500 uppercase bg-gray-100">
-                    <tr>
-                      <th class="px-3 py-1.5">Chỉ số</th>
-                      <th class="px-3 py-1.5 text-right">Giá trị</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr class="border-b border-gray-200 hover:bg-white transition-colors">
-                      <td class="px-3 py-1.5 font-medium text-gray-700">Điểm trường dựa trên điểm đầu vào quy đổi thang 100</td>
-                      <td class="px-3 py-1.5 text-right font-bold" style="color:${mScoreColor}">${m.schoolScore100?.toFixed(1) || 'N/A'}</td>
-                    </tr>
-                    <tr class="border-b border-gray-200 hover:bg-white transition-colors">
-                      <td class="px-3 py-1.5 font-medium text-gray-700">Học phí TB / năm</td>
-                      <td class="px-3 py-1.5 text-right text-green-700 font-bold">${m.tuitionAvg ? (m.tuitionAvg / 1_000_000).toFixed(0) + ' triệu' : 'N/A'}</td>
-                    </tr>
-                    <tr class="border-b border-gray-200 hover:bg-white transition-colors">
-                      <td class="px-3 py-1.5 font-medium text-gray-700">Năm dữ liệu</td>
-                      <td class="px-3 py-1.5 text-right font-bold text-gray-700">${m.admissionYear ?? 'Mới nhất'}</td>
-                    </tr>
-                    <tr class="hover:bg-white transition-colors">
-                      <td class="px-3 py-1.5 font-medium text-gray-700">Thang điểm gốc</td>
-                      <td class="px-3 py-1.5 text-right font-bold text-gray-700">${m.scoreScale ?? 30}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>` : `
-            <!-- Không có ngành → hiển thị highlightMajors -->
-            ${(ud.highlightMajors && ud.highlightMajors.length) ? `
-
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">📋 Điểm chuẩn tiêu biểu</h3>
-                <span class="px-3 py-1 rounded-lg text-xs font-bold border shadow-sm bg-indigo-100 text-indigo-700 border-indigo-200">Các ngành trong trường</span>
-              </div>
-              <p class="text-xs text-gray-400 mb-3">Không xác định được ngành học — hiển thị điểm chuẩn một số ngành tiêu biểu của trường</p>
-              
-              ${u.tuitionAvg ? `
-              <div class="bg-green-50 rounded-lg p-3 border border-green-100 mb-3">
-                <p class="text-[10px] font-bold uppercase text-green-700 tracking-wider mb-0.5">💵 Học phí TB ước tính</p>
-                <p class="text-sm font-semibold text-green-900">${u.tuition || (u.tuitionAvg / 1_000_000).toFixed(0) + ' triệu / năm'}</p>
-              </div>` : ''}
-
-              <div class="bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
-                <table class="w-full text-sm text-left">
-                  <thead class="text-xs text-gray-500 uppercase bg-gray-100">
-                    <tr>
-                      <th class="px-3 py-2">Ngành</th>
-                      <th class="px-3 py-2 text-right">Điểm chuẩn</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${ud.highlightMajors.map((hm, i) => `
-                    <tr class="${i < ud.highlightMajors.length - 1 ? 'border-b border-gray-200' : ''} hover:bg-white transition-colors">
-                      <td class="px-3 py-2 font-medium text-gray-700">${hm.majorName}</td>
-                      <td class="px-3 py-2 text-right font-bold text-indigo-700">${hm.score}</td>
-                    </tr>`).join('')}
-                  </tbody>
-                </table>
-              </div>
-            </div>` : ''}
-            `}
-          </div>
-
+          <!-- ═══ CỘT PHẢI (1/3): Preview ảnh ═══ -->
+          ${previewCard}
 
         </div>`;
 
-
       } else {
         html += `
-        <div class="card-in bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-          <div class="bg-gradient-to-r from-gray-600 to-gray-700 p-6 text-white">
-            <h2 class="text-2xl font-bold">Kết quả phân tích</h2>
-          </div>
-          <div class="px-6 pt-5 pb-4">
-            <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">📄 Thông tin OCR từ ảnh</p>
-            <div class="space-y-3 text-sm">
-              <div class="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                <p class="text-xs text-slate-400 uppercase mb-1">Tên trường</p>
-                <p class="font-bold text-slate-700">${ocr.school_name || '<span class="text-slate-400 italic">Không tìm thấy</span>'}</p>
-              </div>
-              <div class="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                <p class="text-xs text-slate-400 uppercase mb-1">Ngành</p>
-                <p class="font-bold text-slate-700">${ocr.major || '<span class="text-slate-400 italic">Không tìm thấy</span>'}</p>
-              </div>
-              <div class="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                <p class="text-xs text-slate-400 uppercase mb-1">GPA</p>
-                <p class="font-bold ${ocr.gpa ? 'text-slate-700' : 'text-slate-400 italic'}">${ocr.gpa ?? 'Không tìm thấy'}</p>
+        <div class="card-in ${previewCard ? 'grid grid-cols-1 md:grid-cols-5 gap-5' : ''}">
+          <div class="${previewCard ? 'md:col-span-3' : ''} bg-white rounded-2xl shadow-xl overflow-hidden border border-black">
+            <div class="px-6 py-5">
+              <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-800 text-sm">
+                ⚠️ Không phân tích được thông tin trường/ngành
               </div>
             </div>
           </div>
-          <div class="border-t border-gray-100 px-6 py-5">
-            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-800 text-sm">
-              ⚠️ Không phân tích được thông tin trường/ngành
-            </div>
-          </div>
+          ${previewCard}
         </div>`;
       }
 

@@ -3,12 +3,12 @@ import json
 from google import genai
 from google.genai import types
 
-# Khởi tạo client. Nó sẽ tự động đọc biến môi trường GEMINI_API_KEY
-# export GEMINI_API_KEY="your_api_key_here"
-GEMINI_API_KEY = "AIzaSyBygyI0ObjzetiVyA3_S_4FSt_R1Z1_UOU"
-client = genai.Client(api_key=GEMINI_API_KEY)
+# # Khởi tạo client. Nó sẽ tự động đọc biến môi trường GEMINI_API_KEY
+# # export GEMINI_API_KEY="your_api_key_here"
+# GEMINI_API_KEY = "AIzaSyAaMC9fnBnKXfpM9CJMTsk3NBIHRMH4a-8"
+# client = genai.Client(api_key=GEMINI_API_KEY)
 
-def fetch_university_and_major_data(university_query: str, major_query: str, gpa: str):
+def fetch_university_and_major_data(client, university_query: str, major_query: str, gpa: str):
     # 1. Tạo Prompt kết hợp cả trường và ngành
     prompt = f"""
       User Input:
@@ -106,9 +106,9 @@ def fetch_university_and_major_data(university_query: str, major_query: str, gpa
 # --- CHẠY THỬ CODE ---
 if __name__ == "__main__":
     result = fetch_university_and_major_data(
-        university_query="Đại học Công Nghiệp Hà Nội", 
-        major_query="Du lịch (Tiếng Anh)",
-        gpa="3.5"
+        university_query="TRƯỜNG CAO ĐẲNG KỸ NGHỆ II", 
+        major_query="",
+        gpa=""
     )
     
     if result:

@@ -4,10 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Gemini Configuration
-# GEMINI_API_KEY: str = "AIzaSyB7P5nmxkM8mH4jXjLASFEtsZRXcJxQWH8"
-GEMINI_API_KEY: str = "AIzaSyBygyI0ObjzetiVyA3_S_4FSt_R1Z1_UOU"
-# GEMINI_API_KEY: str = "AIzaSyDnb5CbZ5oZ-N2A5z_ZgnLkH7XGspJAPyU"
-# GEMINI_API_KEY: str = "AIzaSyACsUMsJE-cUTmr84iYO_hihSQrDTjZQO8"
+GEMINI_API_KEY: str = "AIzaSyAaMC9fnBnKXfpM9CJMTsk3NBIHRMH4a-8"
 GEMINI_MODEL: str = "gemini-2.5-flash"
 
 # Upload Configuration

@@ -1,7 +1,8 @@
 import json
 import logging
+from google import genai
 from typing import List, Optional
-from fastapi import File, UploadFile, Form, FastAPI, HTTPException
+from fastapi import File, UploadFile, Form, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -18,6 +19,10 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+# Gemini client
+GEMINI_API_KEY = "AIzaSyAaMC9fnBnKXfpM9CJMTsk3NBIHRMH4a-8"
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 # FastAPI app
 app = FastAPI(
@@ -48,30 +53,27 @@ app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 async def serve_ui():
     return FileResponse(FRONTEND_DIR / "index.html")
 
+@app.get("/evaluate", include_in_schema=False)
+async def serve_evaluate():
+    return FileResponse(FRONTEND_DIR / "evaluate.html")
 
 @app.get("/health", tags=["System"])
 async def health_check():
     """Health check endpoint."""
     return {"status": "healthy", "service": "student-info-extraction"}
 
-
-@app.post(
-    "/api/extract",
-    response_model=ExtractionResponse,
-    tags=["Extraction"],
-    summary="Trích xuất thông tin sinh viên từ nhiều ảnh cùng lúc",
-    description=(
-        "Nhận danh sách URL/đường dẫn file ảnh (qua form field 'images') "
-        "hoặc upload file trực tiếp (qua form field 'files')."
-    ),
-)
-async def extract_info(
-    images: Optional[List[str]] = Form(None),
-    files: Optional[List[UploadFile]] = File(None),
-):
+"""
+test with param
+curl "http://0.0.0.0:8188/api/extract?images=https://viet-tin-production.s3.hn-1.cloud.cmctelecom.vn/Images/689c78fcdce991a403d5e012.jpeg&images=https://viet-tin-production.s3.hn-1.cloud.cmctelecom.vn/Images/689c7926dce991a403d5e013.jpeg"
+"""
+async def _process_extraction(
+    image_urls: List[str],
+    uploaded_files: Optional[List[UploadFile]] = None,
+) -> ExtractionResponse:
+    """Shared extraction logic for both GET and POST endpoints."""
     loaded_images = []
     failed_sources = []
-    all_sources = images or []
+    all_sources = list(image_urls)
 
     # Load from URL list
     for source in all_sources:
@@ -84,8 +86,8 @@ async def extract_info(
             failed_sources.append({"source": source, "error": str(e)})
 
     # Load from uploaded files
-    if files:
-        for f in files:
+    if uploaded_files:
+        for f in uploaded_files:
             try:
                 logger.info(f"Loading uploaded file: {f.filename}")
                 content = await f.read()
@@ -110,102 +112,37 @@ async def extract_info(
         )
 
     try:
-        # # Gọi Gemini OCR với TẤT CẢ các ảnh trong 1 request
-        # student_info = await extract_student_info(loaded_images)
-        # school_name = student_info.school_name
-        # major = student_info.major
-        # gpa = student_info.gpa
-        # if major is None:
-        #     major = ""
-        # if gpa is None:
-        #     gpa = ""
-
-        school_name = "Đại học Công Nghiệp Hà Nội"
-        major = "Du lịch (Tiếng Anh)"
-        # major = ""
-        gpa = "3.5"
-        student_info = StudentInfo(school_name=school_name, major=major or None, gpa=gpa or None)
-
+        # Gọi Gemini OCR với TẤT CẢ các ảnh trong 1 request
+        student_info = await extract_student_info(loaded_images)
+        school_name = student_info.school_name
+        major = student_info.major
+        gpa = student_info.gpa
+        if major is None:
+            major = ""
+        if gpa is None:
+            gpa = ""
 
         if school_name and major:
-            university_data = fetch_university_and_major_data(school_name, major, gpa)
-
-            university_data = {
-                "university": {
-                    "name": "Đại học Công Nghiệp Hà Nội",
-                    "location": "Hà Nội",
-                    "description": "Đại học Công Nghiệp Hà Nội là một trường đại học công lập lớn, đa ngành, có truyền thống lâu đời tại Việt Nam, chuyên đào tạo nguồn nhân lực chất lượng cao trong các lĩnh vực công nghiệp, kỹ thuật, kinh tế và dịch vụ.",
-                    "rating": "Tốt",
-                    "schoolScore100": 78,
-                },
-                "major": {
-                    "name": "Du lịch (Tiếng Anh)",
-                    "description": "Chương trình Du lịch (Tiếng Anh) tại Đại học Công Nghiệp Hà Nội đào tạo sinh viên có kiến thức chuyên sâu về ngành du lịch, quản lý lữ hành, khách sạn và dịch vụ, đồng thời trang bị khả năng sử dụng tiếng Anh thành thạo trong môi trường làm việc quốc tế.",
-                    "admissionScores": [
-                    {
-                        "year": "2023",
-                        "score": 23.5
-                    },
-                    {
-                        "year": "2022",
-                        "score": 23.5
-                    },
-                    {
-                        "year": "2021",
-                        "score": 23.65
-                    }
-                    ],
-                    "tuition": "Học phí trung bình khoảng 20.000.000 VNĐ/năm học, có thể điều chỉnh theo quy định của nhà nước và trường qua từng năm.",
-                    "tuitionAvg": 20000000,
-                    "majorScore100": 60,
-                    "rating": "Khá"
-                }
-                }
-            
+            university_data = fetch_university_and_major_data(client, school_name, major, gpa)
         elif school_name:
-            print(">> GO IN HERE")
-            raw = {
-                "name": "Trường Cao đẳng Kỹ nghệ II",
-                "location": "Thành phố Hồ Chí Minh",
-                "schoolScore100": 51.7,
-                "rating": "Trung bình",
-                "highlightMajors": [
-                    {"majorName": "Công nghệ ô tô", "score": "15.0/30"},
-                    {"majorName": "Công nghệ thông tin", "score": "15.0/30"},
-                    {"majorName": "Kỹ thuật điện", "score": "15.0/30"},
-                    {"majorName": "Kế toán", "score": "15.0/30"},
-                    {"majorName": "Quản trị kinh doanh", "score": "15.0/30"}
-                ],
-                "tuition": "Khoảng 12.000.000 - 16.000.000 VNĐ/năm học",
-                "tuitionAvg": 14000000,
-                "admissionYear": "2023",
-                "description": "Trường Cao đẳng Kỹ nghệ II là cơ sở đào tạo nghề uy tín tại Thành phố Hồ Chí Minh.",
-                "scoreScale": 30
-            }
-
-            # raw = fetch_university_data(school_name, gpa)
-
+            raw = fetch_university_data(client, school_name, gpa)
             # Normalize flat → nested để frontend dùng chung 1 UI
-            university_data = {
-                "university": {
-                    "name": "Đại học Công Nghiệp Hà Nội",
-                    "location": "Hà Nội",
-                    "description": "Đại học Công Nghiệp Hà Nội là một trường đại học công lập lớn, đa ngành, có truyền thống lâu đời tại Việt Nam, chuyên đào tạo nguồn nhân lực chất lượng cao trong các lĩnh vực công nghiệp, kỹ thuật, kinh tế và dịch vụ.",
-                    "rating": "Tốt",
-                    "schoolScore100": 78,
-                    # "tuition": "Học phí trung bình khoảng 20.000.000 VNĐ/năm học, có thể điều chỉnh theo quy định của nhà nước và trường qua từng năm.",
-                    "tuitionAvg": 20000000,
-                },
-                "highlightMajors": [
-                    {"majorName": "Công nghệ ô tô", "score": "15.0/30"},
-                    {"majorName": "Công nghệ thông tin", "score": "15.0/30"},
-                    {"majorName": "Kỹ thuật điện", "score": "15.0/30"},
-                    {"majorName": "Kế toán", "score": "15.0/30"},
-                    {"majorName": "Quản trị kinh doanh", "score": "15.0/30"}
-                ],
-            }
+            if raw:
+                university_data = {
+                    "university": {
+                        "name": raw.get("name"),
+                        "location": raw.get("location"),
+                        "description": raw.get("description"),
+                        "rating": raw.get("rating"),
+                        "schoolScore100": raw.get("schoolScore100"),
+                        "tuition": raw.get("tuition"),
+                        "tuitionAvg": raw.get("tuitionAvg"),
+                    },
+                    "highlightMajors": raw.get("highlightMajors", []),
+                }
+            else:
+                university_data = None
         else:
-            logger.info(">> NO SCHOOL AND NO MAJOR")
             university_data = None
 
         success_sources = [s for s in all_sources if not any(fs["source"] == s for fs in failed_sources)]
@@ -242,7 +179,6 @@ async def extract_info(
             university_data=university_data,
         )
 
-
     except Exception as e:
         logger.error(f"❌ Gemini extraction failed: {e}")
         return ExtractionResponse(
@@ -258,6 +194,42 @@ async def extract_info(
             ],
             message="Lỗi API trích xuất ảnh",
         )
+
+
+@app.get(
+    "/api/extract",
+    response_model=ExtractionResponse,
+    tags=["Extraction"],
+    summary="Trích xuất thông tin sinh viên từ URL ảnh (GET)",
+    description=(
+        "Nhận danh sách URL ảnh qua query parameter 'images'.\n\n"
+        "Ví dụ: `/api/extract?images=url1&images=url2`"
+    ),
+)
+async def extract_info_get(
+    images: List[str] = Query(..., description="Danh sách URL ảnh cần trích xuất"),
+):
+    return await _process_extraction(image_urls=images)
+
+
+@app.post(
+    "/api/extract",
+    response_model=ExtractionResponse,
+    tags=["Extraction"],
+    summary="Trích xuất thông tin sinh viên từ nhiều ảnh cùng lúc (POST)",
+    description=(
+        "Nhận danh sách URL/đường dẫn file ảnh (qua form field 'images') "
+        "hoặc upload file trực tiếp (qua form field 'files')."
+    ),
+)
+async def extract_info_post(
+    images: Optional[List[str]] = Form(None),
+    files: Optional[List[UploadFile]] = File(None),
+):
+    return await _process_extraction(
+        image_urls=images or [],
+        uploaded_files=files,
+    )
 
 
 if __name__ == "__main__":

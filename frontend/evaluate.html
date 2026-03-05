@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đang đánh giá — VietTinPay AI Student</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* ── Loading Animation ── */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loader-ring {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid #e5e7eb;
+            border-top-color: #3b82f6;
+            border-right-color: #8b5cf6;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .pulse-text {
+            animation: pulseText 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseText {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        .dot-animate span {
+            animation: dotBounce 1.4s infinite ease-in-out both;
+        }
+
+        .dot-animate span:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .dot-animate span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot-animate span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes dotBounce {
+
+            0%,
+            80%,
+            100% {
+                opacity: 0.2;
+                transform: scale(0.8);
+            }
+
+            40% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        /* ── Result animations ── */
+        .card-in {
+            animation: fadeUp 0.4s ease-out both;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .score-fill {
+            animation: growBar 1s ease-out forwards;
+        }
+
+        @keyframes growBar {
+            from {
+                width: 0%;
+            }
+        }
+
+        /* ── Step indicators ── */
+        .step-item {
+            transition: all 0.4s ease;
+        }
+
+        .step-item.active {
+            color: #3b82f6;
+        }
+
+        .step-item.done {
+            color: #22c55e;
+        }
+
+        .step-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .step-item.pending .step-icon {
+            background: #f3f4f6;
+            color: #9ca3af;
+        }
+
+        .step-item.active .step-icon {
+            background: #dbeafe;
+            color: #3b82f6;
+            animation: pulseText 1.5s ease-in-out infinite;
+        }
+
+        .step-item.done .step-icon {
+            background: #dcfce7;
+            color: #22c55e;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-r from-blue-400 to-purple-500 min-h-screen text-gray-800 p-2 md:p-6">
+    <div class="container mx-auto">
+        <div class="bg-white shadow-2xl form-wrapper rounded-3xl p-4 md:p-8 max-w-6xl mx-auto min-h-[calc(100vh-4rem)]">
+
+            <!-- ═══ HEADER ═══ -->
+            <nav
+                class="bg-white shadow-sm mb-6 rounded-2xl sticky top-2 z-50 border border-gray-100 py-2 transition-all hover:shadow-md">
+                <div class="container mx-auto px-4 py-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                                <i class="fas fa-graduation-cap text-2xl"></i>
+                            </div>
+                            <div>
+                                <h1 class="font-bold text-gray-900 text-lg md:text-xl tracking-tight">VietTinPay AI
+                                    Student</h1>
+                                <p class="text-sm text-gray-500 hidden md:block">Hệ thống phân tích thông tin & thẩm
+                                    định hồ sơ</p>
+                            </div>
+                        </div>
+                        <a href="/"
+                            class="flex items-center gap-2 text-xs md:text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-full border border-gray-200 shadow-inner hover:bg-gray-100 transition-colors">
+                            <i class="fas fa-arrow-left"></i>
+                            <span class="hidden md:inline font-medium">Quay lại</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+
+            <main class="w-full space-y-6">
+                <!-- ═══ LOADING STATE ═══ -->
+                <div id="loading-section" class="loading-container">
+                    <div class="loader-ring mb-6"></div>
+                    <h2 id="loading-title" class="text-2xl font-bold text-gray-800 mb-2">Đang đánh giá hồ sơ</h2>
+                    <p class="text-gray-500 text-sm mb-8 dot-animate">
+                        Hệ thống đang phân tích<span>.</span><span>.</span><span>.</span>
+                    </p>
+
+                    <!-- Steps -->
+                    <div class="w-full max-w-md space-y-3" id="steps-container">
+                        <div class="step-item active flex items-center gap-3" id="step-1">
+                            <div class="step-icon"><i class="fas fa-download"></i></div>
+                            <span class="text-sm font-medium">Đang tải ảnh...</span>
+                        </div>
+                        <div class="step-item pending flex items-center gap-3" id="step-2">
+                            <div class="step-icon"><i class="fas fa-eye"></i></div>
+                            <span class="text-sm font-medium">Nhận dạng thông tin (OCR)</span>
+                        </div>
+                        <div class="step-item pending flex items-center gap-3" id="step-3">
+                            <div class="step-icon"><i class="fas fa-university"></i></div>
+                            <span class="text-sm font-medium">Phân tích trường & ngành</span>
+                        </div>
+                        <div class="step-item pending flex items-center gap-3" id="step-4">
+                            <div class="step-icon"><i class="fas fa-check-circle"></i></div>
+                            <span class="text-sm font-medium">Hoàn tất đánh giá</span>
+                        </div>
+                    </div>
+
+                    <!-- Image count -->
+                    <p id="image-count" class="text-xs text-gray-400 mt-6"></p>
+                </div>
+
+                <!-- ═══ ERROR STATE ═══ -->
+                <div id="error-section" class="hidden">
+                    <div class="card-in bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+                        <i class="fas fa-exclamation-triangle text-red-400 text-4xl mb-3"></i>
+                        <p class="font-bold text-red-700 mb-2">Lỗi đánh giá</p>
+                        <p id="error-msg" class="text-sm text-red-600 font-mono break-all"></p>
+                        <button onclick="window.location.reload()"
+                            class="mt-4 px-6 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-medium transition-colors">
+                            <i class="fas fa-redo mr-2"></i>Thử lại
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ═══ RESULT AREA ═══ -->
+                <div id="result-area" class="hidden"></div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // ─── Rating helpers ───────────────────────────────────────
+        const RATING_STYLE = {
+            'Top': 'bg-purple-100 text-purple-700 border-purple-200',
+            'Tốt': 'bg-green-100 text-green-700 border-green-200',
+            'Khá': 'bg-blue-100 text-blue-700 border-blue-200',
+            'Trung bình': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+            'Kém': 'bg-red-100 text-red-700 border-red-200',
+        };
+        const RATING_BADGE = {
+            'Top': '🏆 Top Tier', 'Tốt': '✨ Tốt', 'Khá': '👍 Khá',
+            'Trung bình': '⚖️ Trung bình', 'Kém': '⚠️ Kém',
+        };
+        const SCORE_COLOR = {
+            'Top': '#a855f7', 'Tốt': '#22c55e', 'Khá': '#3b82f6',
+            'Trung bình': '#eab308', 'Kém': '#ef4444',
+        };
+
+        function ratingBadge(rating) {
+            const s = RATING_STYLE[rating] || '';
+            return `<span class="px-3 py-0.5 rounded-full text-xs font-bold border ${s}">${RATING_BADGE[rating] || rating}</span>`;
+        }
+
+        // ─── Gauge helper ─────────────────────────────────────────
+        function renderGauge(score, rating) {
+            const color = SCORE_COLOR[rating] || '#3b82f6';
+            const pct = Math.min(Math.max(score || 0, 0), 100);
+            const r = 46, cx = 56, cy = 60;
+            const circumference = Math.PI * r;
+            const dash = (pct / 100) * circumference;
+            const gap = circumference - dash;
+            return `
+        <svg viewBox="0 0 112 70" width="120" height="75">
+          <path d="M10,60 A46,46 0 0,1 102,60" fill="none" stroke="#e5e7eb" stroke-width="10" stroke-linecap="round"/>
+          <path d="M10,60 A46,46 0 0,1 102,60" fill="none" stroke="${color}" stroke-width="10"
+            stroke-linecap="round"
+            stroke-dasharray="${dash.toFixed(1)} ${gap.toFixed(1)}"
+            stroke-dashoffset="0"
+            style="transition:stroke-dasharray 1s ease-out;"/>
+          <text x="56" y="56" text-anchor="middle" font-size="18" font-weight="800" fill="${color}" font-family="Inter,sans-serif">${pct.toFixed(0)}</text>
+          <text x="56" y="68" text-anchor="middle" font-size="8" fill="#9ca3af" font-family="Inter,sans-serif">/100</text>
+        </svg>`;
+        }
+
+        // ─── Step progress ────────────────────────────────────────
+        function setStep(stepNum) {
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById(`step-${i}`);
+                el.classList.remove('active', 'done', 'pending');
+                if (i < stepNum) el.classList.add('done');
+                else if (i === stepNum) el.classList.add('active');
+                else el.classList.add('pending');
+            }
+        }
+
+        // ─── Image preview state ─────────────────────────────────
+        let imageUrls = [];
+        let currentPreviewIndex = 0;
+
+        window.nextPreview = function () {
+            if (!imageUrls.length) return;
+            currentPreviewIndex = (currentPreviewIndex + 1) % imageUrls.length;
+            updatePreviewSlider();
+        };
+
+        window.prevPreview = function () {
+            if (!imageUrls.length) return;
+            currentPreviewIndex = (currentPreviewIndex - 1 + imageUrls.length) % imageUrls.length;
+            updatePreviewSlider();
+        };
+
+        function updatePreviewSlider() {
+            const imgEl = document.getElementById('preview-slider-img');
+            const counterEl = document.getElementById('preview-slider-counter');
+            const linkEl = document.getElementById('preview-slider-link');
+            if (imgEl && imageUrls[currentPreviewIndex]) {
+                const url = imageUrls[currentPreviewIndex];
+                imgEl.src = url;
+                if (linkEl) linkEl.href = url;
+                if (counterEl) counterEl.textContent = `${currentPreviewIndex + 1} / ${imageUrls.length}`;
+            }
+        }
+
+        // ─── Render result ────────────────────────────────────────
+        function renderResult(data) {
+            const area = document.getElementById('result-area');
+            const ocr = data.results?.[0]?.data || {};
+            const ud = data.university_data;
+
+            // Build preview card
+            const previewCard = imageUrls.length ? `
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-4 md:sticky md:top-6 md:col-span-2 flex flex-col items-center">
+          <div class="flex items-center justify-between w-full mb-3">
+            <p class="text-sm font-bold uppercase tracking-widest text-gray-800"><i class="fas fa-image text-purple-600 mr-2"></i>Ảnh minh chứng</p>
+            ${imageUrls.length > 1 ? `<span id="preview-slider-counter" class="text-xs font-medium text-gray-800 bg-white px-2 py-0.5 rounded-md">1 / ${imageUrls.length}</span>` : ''}
+          </div>
+          <div class="relative w-full flex-1 flex items-center justify-center overflow-hidden min-h-[300px]">
+            <a id="preview-slider-link" href="${imageUrls[0]}" target="_blank" class="block w-full h-full flex items-center justify-center">
+              <img id="preview-slider-img" src="${imageUrls[0]}" class="w-full h-auto object-contain rounded drop-shadow-sm transition-opacity duration-200" onerror="this.parentElement.style.display='none'" />
+            </a>
+            ${imageUrls.length > 1 ? `
+            <button onclick="prevPreview()" class="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-white/90 hover:bg-white text-gray-800 rounded-full shadow-md border border-gray-200 transition-all hover:scale-105 active:scale-95">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <button onclick="nextPreview()" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-white/90 hover:bg-white text-gray-800 rounded-full shadow-md border border-gray-200 transition-all hover:scale-105 active:scale-95">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+            </button>
+            ` : ''}
+          </div>
+        </div>` : '';
+
+            let html = '';
+
+            // ── OCR Card ──
+            html += `
+      <div class="card-in bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl shadow-sm border border-blue-100 p-6 mb-6">
+        <p class="text-lg font-black uppercase tracking-widest text-gray-800 mb-3"><i class="fas fa-file-invoice text-blue-600 mr-2"></i>Thông tin chính</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-base">
+          <div class="bg-white rounded-xl p-4 border border-blue-100 shadow-sm">
+            <p class="text-sm text-gray-500 uppercase mb-1 font-semibold text-[11px] tracking-wider">Tên trường</p>
+            <p class="font-bold text-gray-800">${ocr.school_name || '<span class="text-gray-800 italic">Không tìm thấy</span>'}</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 border border-blue-100 shadow-sm">
+            <p class="text-sm text-gray-500 uppercase mb-1 font-semibold text-[11px] tracking-wider">Ngành</p>
+            <p class="font-bold text-gray-800">${ocr.major || '<span class="text-gray-800 italic">Không tìm thấy</span>'}</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 border border-blue-100 shadow-sm">
+            <p class="text-sm text-gray-500 uppercase mb-1 font-semibold text-[11px] tracking-wider">GPA</p>
+            <p class="font-bold ${ocr.gpa ? 'text-gray-800' : 'text-gray-800 italic'}">${ocr.gpa ?? 'Không tìm thấy'}</p>
+          </div>
+        </div>
+      </div>`;
+
+            // ── University + Major analysis ──
+            if (ud && (ud.university || ud.major)) {
+                const u = ud.university || {};
+                const m = ud.major || {};
+                const hasUniversity = u && u.name;
+                const hasMajor = m && m.name;
+
+                html += `
+        <div class="card-in grid grid-cols-1 ${previewCard ? 'md:grid-cols-5' : ''} gap-5">
+          <div class="${previewCard ? 'md:col-span-3' : ''} space-y-5">
+            <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden border border-gray-200">
+              <div class="p-5 space-y-5">
+
+                <!-- Điểm đánh giá -->
+                <div class="grid grid-cols-1 ${hasMajor ? 'md:grid-cols-2' : ''} gap-4">
+                  ${hasUniversity ? `
+                  <div class="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-gray-200">
+                    <p class="text-lg font-bold uppercase tracking-wider text-gray-800 mb-2"><i class="fas fa-university text-blue-600 mr-2 text-xl"></i>Điểm trường</p>
+                    ${renderGauge(u.schoolScore100, u.rating)}
+                    <div class="mt-2 text-center">
+                      <p class="text-sm font-bold px-3 py-1 rounded-full inline-block ${RATING_STYLE[u.rating] || 'bg-white text-gray-800'}">${RATING_BADGE[u.rating] || u.rating}</p>
+                    </div>
+                  </div>` : ''}
+                  ${hasMajor ? `
+                  <div class="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-gray-200">
+                    <p class="text-lg font-bold uppercase tracking-wider text-gray-800 mb-2"><i class="fas fa-graduation-cap text-purple-600 mr-2 text-xl"></i>Điểm ngành</p>
+                    ${renderGauge(m.majorScore100, m.rating)}
+                    <div class="mt-2 text-center">
+                      <p class="text-sm font-bold px-3 py-1 rounded-full inline-block ${RATING_STYLE[m.rating] || 'bg-white text-gray-800'}">${RATING_BADGE[m.rating] || m.rating}</p>
+                    </div>
+                  </div>` : ''}
+                </div>
+
+                <!-- Học phí -->
+                ${(hasMajor && m.tuitionAvg) || (hasUniversity && u.tuitionAvg) ? `
+                <div class="bg-green-50 rounded-lg p-4 border border-green-100">
+                  <p class="text-base font-bold text-green-700 tracking-wider mb-1"><i class="fas fa-money-bill-wave text-green-600 mr-2"></i>Học phí ước tính</p>
+                  <p class="text-sm font-semibold text-green-900">${hasMajor
+                            ? (m.tuition || (m.tuitionAvg ? (m.tuitionAvg / 1_000_000).toFixed(0) + ' triệu / năm' : 'N/A'))
+                            : (u.tuition || (u.tuitionAvg ? (u.tuitionAvg / 1_000_000).toFixed(0) + ' triệu / năm' : 'N/A'))
+                        }</p>
+                </div>` : ''}
+
+                <!-- Phân tích trường -->
+                ${hasUniversity && u.description ? `
+                <br>
+                <div>
+                  <h3 class="text-base font-bold text-gray-800 flex items-center gap-2 mb-2"><i class="fas fa-building text-blue-600 mr-2"></i>Phân tích tổng quan trường: ${u.name}</h3>
+                  <p class="text-gray-800 text-base leading-relaxed">${u.description}</p>
+                </div>` : ''}
+
+                <br>
+                <!-- Phân tích ngành -->
+                ${hasMajor ? `
+                <div>
+                  <h3 class="text-base font-bold text-gray-800 flex items-center gap-2 mb-2"><i class="fas fa-book-reader text-purple-600 mr-2"></i>Phân tích chuyên sâu ngành — ${m.name}</h3>
+                  ${m.description ? `<p class="text-gray-800 text-base leading-relaxed mb-4">${m.description}</p>` : ''}
+                  <br>
+                  <div class="bg-white rounded-lg overflow-hidden border border-gray-200">
+                    <table class="w-full text-base text-left">
+                      <thead class="text-sm font-bold text-gray-800 uppercase bg-white">
+                        <tr>
+                          <th class="px-3 py-2">Điểm chuẩn các năm</th>
+                          <th class="px-3 py-1.5 text-right">Giá trị</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${(m.admissionScores && m.admissionScores.length > 0) ? m.admissionScores.map(scoreObj => `
+                        <tr class="border-b border-gray-200 hover:bg-white transition-colors">
+                          <td class="px-3 py-1.5 font-medium text-gray-800">Điểm chuẩn (${scoreObj.year})</td>
+                          <td class="px-3 py-1.5 text-right font-bold text-gray-800">${scoreObj.score}</td>
+                        </tr>`).join('') : `
+                        <tr class="border-b border-gray-200 hover:bg-white transition-colors">
+                          <td class="px-3 py-1.5 font-medium text-gray-800">Năm dữ liệu</td>
+                          <td class="px-3 py-1.5 text-right font-bold text-gray-800">${m.admissionYear ?? 'Mới nhất'}</td>
+                        </tr>`}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>` : `
+                <!-- Không có ngành → highlightMajors -->
+                ${(ud.highlightMajors && ud.highlightMajors.length) ? `
+                <div>
+                  <h3 class="text-base font-bold text-gray-800 flex items-center gap-2 mb-2"><i class="fas fa-chart-line text-blue-600 mr-2"></i>Điểm chuẩn tiêu biểu</h3>
+                  <div class="bg-white rounded-lg overflow-hidden border border-gray-200">
+                    <table class="w-full text-base text-left">
+                      <thead class="text-sm font-bold text-gray-800 uppercase bg-white">
+                        <tr>
+                          <th class="px-3 py-2">Ngành</th>
+                          <th class="px-3 py-2 text-right">Điểm chuẩn</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${ud.highlightMajors.map((hm, i) => `
+                        <tr class="${i < ud.highlightMajors.length - 1 ? 'border-b border-gray-200' : ''} hover:bg-white transition-colors">
+                          <td class="px-3 py-2 font-medium text-gray-800">${hm.majorName}</td>
+                          <td class="px-3 py-2 text-right font-bold text-gray-800">${hm.score}</td>
+                        </tr>`).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>` : ''}
+                `}
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview ảnh -->
+          ${previewCard}
+        </div>`;
+
+            } else {
+                html += `
+        <div class="card-in ${previewCard ? 'grid grid-cols-1 md:grid-cols-5 gap-5' : ''}">
+          <div class="${previewCard ? 'md:col-span-3' : ''} bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden border border-gray-200">
+            <div class="px-6 py-5">
+              <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-800 text-sm">
+                ⚠️ Không phân tích được thông tin trường/ngành
+              </div>
+            </div>
+          </div>
+          ${previewCard}
+        </div>`;
+            }
+
+            area.innerHTML = html;
+        }
+
+        // ─── Main flow ────────────────────────────────────────────
+        async function startEvaluation() {
+            const params = new URLSearchParams(window.location.search);
+            imageUrls = params.getAll('images').filter(Boolean);
+
+            if (!imageUrls.length) {
+                document.getElementById('loading-section').classList.add('hidden');
+                document.getElementById('error-section').classList.remove('hidden');
+                document.getElementById('error-msg').textContent = 'Không có URL ảnh nào được cung cấp. Vui lòng thêm param ?images=url1&images=url2';
+                return;
+            }
+
+            // Show image count
+            document.getElementById('image-count').textContent = `Đang xử lý ${imageUrls.length} ảnh`;
+
+            // Update title
+            document.title = 'Đang đánh giá... — VietTinPay AI Student';
+
+            // Simulate steps progress
+            setTimeout(() => setStep(2), 1500);
+            setTimeout(() => setStep(3), 4000);
+
+            try {
+                // Build GET URL
+                const apiParams = new URLSearchParams();
+                imageUrls.forEach(url => apiParams.append('images', url));
+                const apiUrl = `/api/extract?${apiParams.toString()}`;
+
+                const response = await fetch(apiUrl);
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errText}`);
+                }
+
+                const data = await response.json();
+
+                // Step 4: done
+                setStep(4);
+                await new Promise(r => setTimeout(r, 600));
+
+                // Hide loading, show result
+                document.getElementById('loading-section').classList.add('hidden');
+                document.getElementById('result-area').classList.remove('hidden');
+                document.title = 'Kết quả đánh giá — VietTinPay AI Student';
+
+                renderResult(data);
+
+            } catch (err) {
+                document.getElementById('loading-section').classList.add('hidden');
+                document.getElementById('error-section').classList.remove('hidden');
+                document.getElementById('error-msg').textContent = err.message;
+                document.title = 'Lỗi — VietTinPay AI Student';
+            }
+        }
+
+        // Start on page load
+        startEvaluation();
+    </script>
+    </div>
+</body>
+
+</html>
